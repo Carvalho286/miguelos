@@ -1,103 +1,105 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { Rnd } from "react-rnd";
+import { motion } from "framer-motion";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [windows, setWindows] = useState([
+    { id: 1, title: "Projects", x: 50, y: 80, width: 400, height: 300, open: false },
+    { id: 2, title: "About", x: 120, y: 150, width: 400, height: 250, open: false },
+    { id: 3, title: "This PC", x: 200, y: 120, width: 520, height: 360, open: false, type: 'folder' },
+  ]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const toggleWindow = (id: number) =>
+    setWindows(ws => ws.map(w => (w.id === id ? { ...w, open: !w.open } : w)));
+
+  const [selectedItem, setSelectedItem] = useState<{ name: string; type: string } | null>(null);
+
+  const folderItems = [
+    { name: 'Documents', type: 'folder', preview: 'Some personal documents and notes.' },
+    { name: 'Pictures', type: 'folder', preview: 'Photos from trips and events.' },
+    { name: 'Downloads', type: 'folder', preview: 'Files you downloaded from the web.' },
+    { name: 'Readme.txt', type: 'file', preview: 'This is an example readme file.' },
+  ];
+
+  return (
+    <main className="h-screen w-screen bg-gradient-to-br from-gray-900 to-black relative">
+      {/* Desktop icons */}
+      <div className="absolute left-6 top-6 flex flex-col gap-4">
+        {windows.map(w => (
+          <button
+            key={w.id}
+            onDoubleClick={() => toggleWindow(w.id)}
+            className="flex flex-col items-center text-sm text-gray-300 hover:text-white"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <div className="h-12 w-12 bg-gray-700 rounded-md mb-1 flex items-center justify-center">
+              {w.title === 'This PC' ? '�️' : '�🗔'}
+            </div>
+            {w.title}
+          </button>
+        ))}
+      </div>
+
+      {/* Windows */}
+      {windows.map(w => (
+        w.open && (
+          <Rnd
+            key={w.id}
+            default={{ x: w.x, y: w.y, width: w.width, height: w.height }}
+            bounds="window"
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+            <motion.div
+              className="bg-gray-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="flex justify-between items-center bg-gray-700 px-3 py-1">
+                <span>{w.title}</span>
+                <button onClick={() => toggleWindow(w.id)} className="text-red-400">✖</button>
+              </div>
+              <div className="p-4 text-sm text-gray-200">
+                {w.title === "Projects" && "Here you’ll showcase your best works."}
+                {w.title === "About" && "A bit about who you are and what you build."}
+                {w.title === 'This PC' && (
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="col-span-3">
+                      <div className="grid grid-cols-3 gap-4">
+                        {folderItems.map(item => (
+                          <div
+                            key={item.name}
+                            onClick={() => setSelectedItem({ name: item.name, type: item.type })}
+                            className="flex flex-col items-center p-2 cursor-pointer hover:bg-gray-700 rounded"
+                          >
+                            <div className="h-12 w-12 bg-gray-700 rounded-md mb-1 flex items-center justify-center">
+                              {item.type === 'folder' ? '📁' : '📄'}
+                            </div>
+                            <span className="text-xs text-gray-200">{item.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="col-span-1 p-2 border-l border-gray-700">
+                      <div className="text-sm font-medium text-gray-200 mb-2">Preview</div>
+                      {selectedItem ? (
+                        <div>
+                          <div className="text-sm text-gray-100">{selectedItem.name}</div>
+                          <div className="text-xs text-gray-300 mt-2">
+                            {folderItems.find(i => i.name === selectedItem.name)?.preview}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-400">Select an item to see preview.</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </Rnd>
+        )
+      ))}
+    </main>
   );
 }
