@@ -1,0 +1,19 @@
+[
+  {
+    "name": "SkinPeek",
+    "github": "https://github.com/Carvalho286/SkinPeek",
+    "live": "https://skinpeek.net",
+    "photos": [
+      "/projects/skinpeek/1.jpg"
+    ]
+  },
+  {
+    "name": "Hotel Manager App",
+    "github": "https://github.com/Carvalho286/hotel-app",
+    "live": "",
+    "photos": [
+      "/projects/hotel/1.png",
+      "/projects/hotel/2.jpg"
+    ]
+  }
+]
