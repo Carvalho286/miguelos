@@ -10,6 +10,7 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "formidable": "^3.5.4",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.548.0",
     "next": "15.5.6",
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
     "@tailwindcss/postcss": "^4",
+    "@types/formidable": "^3.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

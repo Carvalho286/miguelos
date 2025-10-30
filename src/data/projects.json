@@ -1,19 +1,8 @@
 [
   {
-    "name": "SkinPeek",
-    "github": "https://github.com/Carvalho286/SkinPeek",
-    "live": "https://skinpeek.net",
-    "photos": [
-      "/projects/skinpeek/1.jpg"
-    ]
-  },
-  {
-    "name": "Hotel Manager App",
-    "github": "https://github.com/Carvalho286/hotel-app",
+    "name": "Casa do Fontao",
+    "github": "https://github.com/Carvalho286/casa-do-fontao",
     "live": "",
-    "photos": [
-      "/projects/hotel/1.png",
-      "/projects/hotel/2.jpg"
-    ]
+    "photos": []
   }
 ]

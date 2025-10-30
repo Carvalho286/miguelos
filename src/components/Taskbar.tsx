@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Github, Monitor } from "lucide-react";
+import { Github, Linkedin, Mail, Monitor } from "lucide-react";
 
 interface TaskbarProps {
   windows: { id: number; title: string; open: boolean }[];
@@ -60,6 +60,22 @@ export default function Taskbar({ windows, toggleWindow }: TaskbarProps) {
         >
           <Github size={18} />
         </a>
+        <a
+          href="https://www.linkedin.com/in/carvalho286"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2 rounded hover:bg-gray-700/60"
+        >
+          <Linkedin size={18} />
+        </a>
+        <a
+          href="mailto:carvalhomiguel286@gmail.com"
+          className="p-2 rounded hover:bg-gray-700/60"
+          aria-label="Email"
+        >
+          <Mail size={18} />
+        </a>
+
       </div>
 
       {/* Right side — Clock */}

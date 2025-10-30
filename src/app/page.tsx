@@ -7,6 +7,11 @@ import Taskbar from "@/components/Taskbar";
 import projectsData from "@/data/projects.json";
 import { Monitor, FolderOpen, User, Image as ImageIcon } from "lucide-react";
 
+interface WindowPos {
+  x?: number;
+  y?: number;
+}
+
 interface Project {
   name: string;
   github: string;
@@ -19,6 +24,9 @@ interface FolderItem {
   type: "folder" | "file";
   preview?: string;
 }
+
+type PCFile = FolderItem & WindowPos;
+type ProjectWithPos = Project & WindowPos;
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -55,8 +63,12 @@ export default function Home() {
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedPCItem, setSelectedPCItem] = useState<FolderItem | null>(null);
-  const [galleryProject, setGalleryProject] = useState<Project | null>(null);
+  const [galleryProject, setGalleryProject] = useState<ProjectWithPos | null>(
+    null
+  );
+  const [openTextFile, setOpenTextFile] = useState<PCFile | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [windowOffset, setWindowOffset] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -84,7 +96,26 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [lightboxIndex, galleryProject]);
 
-  if (!mounted) return <main className="h-screen w-screen bg-black" />;
+  if (!mounted) return null;
+
+  const getNextWindowPosition = (baseX: number, baseY: number) => {
+    if (typeof window === "undefined") return { x: baseX, y: baseY };
+
+    const offsetStep = 40;
+    const pad = 24;
+
+    let nextX = baseX + windowOffset;
+    let nextY = baseY + windowOffset;
+
+    const maxX = Math.max(pad, window.innerWidth - 320);
+    const maxY = Math.max(pad, window.innerHeight - 220);
+    nextX = Math.min(Math.max(pad, nextX), maxX);
+    nextY = Math.min(Math.max(pad, nextY), maxY);
+
+    setWindowOffset((prev) => (prev + offsetStep) % 200);
+
+    return { x: nextX, y: nextY };
+  };
 
   const toggleWindow = (id: number) => {
     setWindows((ws) =>
@@ -140,6 +171,23 @@ export default function Home() {
       default:
         return <FolderOpen size={44} />;
     }
+  };
+
+  const formatTextWithBold = (text: string) => {
+    const lines = text.split("\n");
+    return lines.map((line, i) => {
+      const match = line.match(/^(Name|Location|Role|Hobbies):/);
+      if (match) {
+        const label = match[0];
+        const rest = line.replace(label, "").trim();
+        return (
+          <div key={i}>
+            <strong>{label}</strong> {rest}
+          </div>
+        );
+      }
+      return <div key={i}>{line}</div>;
+    });
   };
 
   return (
@@ -272,57 +320,183 @@ export default function Home() {
 
                   {/* This PC */}
                   {w.title === "This PC" && (
-                    <div>
-                      {!selectedPCItem ? (
-                        <div className="grid grid-cols-4 gap-4">
-                          {folderItems.map((item) => (
-                            <div
-                              key={item.name}
-                              onDoubleClick={() => setSelectedPCItem(item)}
-                              className="flex flex-col items-center p-2 cursor-pointer hover:text-white transition-all"
-                            >
-                              <div className="text-5xl mb-2">
-                                {item.type === "folder" ? "📁" : "📄"}
-                              </div>
-                              <span className="text-xs text-gray-200">
-                                {item.name}
+                    <div className="text-gray-200 space-y-6 select-none">
+                      {/* Drives Section */}
+                      <div>
+                        <h3 className="text-sm font-semibold mb-2 text-gray-400">
+                          Devices and drives
+                        </h3>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* Local Disk (C:) */}
+                          <div className="bg-[#2a2a2a] rounded-xl p-4 border border-gray-700 hover:border-gray-500 transition-all">
+                            <div className="flex items-center justify-between text-sm font-medium mb-2">
+                              <span className="flex items-center gap-2">
+                                🖥️ <span>Local Disk (C:)</span>
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                92% full
                               </span>
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div>
-                          <div className="flex items-center gap-2 mb-4">
-                            <button
-                              onClick={() => setSelectedPCItem(null)}
-                              className="px-2 py-1 bg-gray-700/60 rounded hover:bg-gray-700"
-                            >
-                              ←
-                            </button>
-                            <h3 className="text-gray-100 font-medium text-lg">
-                              {selectedPCItem.name}
-                            </h3>
+                            <div className="w-full h-3 bg-gray-700 rounded-lg overflow-hidden">
+                              <div className="h-full w-[92%] bg-blue-600 rounded-lg" />
+                            </div>
+                            <div className="text-xs text-gray-400 mt-2">
+                              12 GB free of 256 GB
+                            </div>
                           </div>
-                          <p className="text-gray-300 text-sm">
-                            {selectedPCItem.preview || "This folder is empty."}
-                          </p>
+
+                          {/* Data (D:) */}
+                          <div className="bg-[#2a2a2a] rounded-xl p-4 border border-gray-700 hover:border-gray-500 transition-all">
+                            <div className="flex items-center justify-between text-sm font-medium mb-2">
+                              <span className="flex items-center gap-2">
+                                💾 <span>Data (D:)</span>
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                47% full
+                              </span>
+                            </div>
+                            <div className="w-full h-3 bg-gray-700 rounded-lg overflow-hidden">
+                              <div className="h-full w-[47%] bg-green-600 rounded-lg" />
+                            </div>
+                            <div className="text-xs text-gray-400 mt-2">
+                              136 GB free of 256 GB
+                            </div>
+                          </div>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Folders Section */}
+                      <div>
+                        <h3 className="text-sm font-semibold mb-2 text-gray-400">
+                          Folders
+                        </h3>
+                        <div className="grid grid-cols-4 sm:grid-cols-5 gap-4">
+                          {/* Documents */}
+                          <div
+                            onDoubleClick={() =>
+                              setOpenTextFile({
+                                name: "AboutMe.txt",
+                                type: "file",
+                                preview: `Name: Miguel Carvalho
+Location: Luxembourg / Portugal
+Role: Full-Stack Developer
+Hobbies: Game development, Drone photography, Travel`,
+                              })
+                            }
+                            className="flex flex-col items-center p-2 cursor-pointer hover:text-white transition-all"
+                          >
+                            <div className="text-5xl mb-1">📄</div>
+                            <span className="text-xs">Documents</span>
+                          </div>
+
+                          {/* Projects */}
+                          <div
+                            onDoubleClick={() =>
+                              setWindows((prev) =>
+                                prev.map((win) =>
+                                  win.title === "Projects"
+                                    ? { ...win, open: true }
+                                    : win
+                                )
+                              )
+                            }
+                            className="flex flex-col items-center p-2 cursor-pointer hover:text-white transition-all"
+                          >
+                            <div className="text-5xl mb-1">📁</div>
+                            <span className="text-xs">Projects</span>
+                          </div>
+
+                          {/* System Info */}
+                          <div
+                            onDoubleClick={() =>
+                              setOpenTextFile({
+                                name: "SystemInfo.txt",
+                                type: "file",
+                                preview: `Device Name: MIGUEL-PC
+System Type: Full-Stack Developer
+Processor: Human (Curious Type)
+Memory: 32GB of caffeine
+Battery: Always charging ☕
+Network: Connected to innovation
+OS Build: v1.0.2025`,
+                              })
+                            }
+                            className="flex flex-col items-center p-2 cursor-pointer hover:text-white transition-all"
+                          >
+                            <div className="text-5xl mb-1">⚙️</div>
+                            <span className="text-xs">SystemInfo.txt</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
                   {/* About */}
                   {w.title === "About" && (
-                    <div>
-                      <h2 className="font-semibold mb-2 text-gray-100">
-                        About Me
-                      </h2>
-                      <p>
-                        Hello! I'm Miguel Carvalho, a full-stack developer with
-                        a passion for creating beautiful and performant
-                        applications. I love working with React, TypeScript, and
-                        modern web tools to bring ideas to life.
-                      </p>
+                    <div className="relative h-full">
+                      {!selectedPCItem ? (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-6 mt-2">
+                          {/* AboutMe.txt */}
+                          <div
+                            onDoubleClick={() =>
+                              setOpenTextFile({
+                                name: "AboutMe.txt",
+                                type: "file",
+                                preview: `Name: Miguel Carvalho
+Location: Luxembourg / Portugal
+Role: Full-Stack Developer
+Hobbies: Game development, Drone photography, Travel`,
+                              })
+                            }
+                            className="flex flex-col items-center p-2 cursor-pointer hover:text-white transition-all"
+                          >
+                            <div className="text-5xl mb-2">📄</div>
+                            <span className="text-xs text-gray-200">
+                              AboutMe.txt
+                            </span>
+                          </div>
+
+                          {/* CV.pdf */}
+                          <div
+                            onDoubleClick={() =>
+                              setGalleryProject({
+                                name: "CV.pdf",
+                                github: "",
+                                photos: ["/MiguelCarvalhoCV.pdf"], // we'll treat it as a single "photo"
+                              })
+                            }
+                            className="flex flex-col items-center p-2 cursor-pointer hover:text-white transition-all"
+                          >
+                            <div className="text-5xl mb-2">📕</div>
+                            <span className="text-xs text-gray-200">
+                              CV.pdf
+                            </span>
+                          </div>
+
+                          {/* Skills.cmd */}
+                          <div
+                            onDoubleClick={() =>
+                              setOpenTextFile({
+                                name: "Skills.cmd",
+                                type: "file",
+                                preview: `> skills --show
+
+Frontend: React, Next.js, Tailwind, TypeScript
+Backend: FastAPI, Node.js, Laravel
+Databases: MongoDB, PostgreSQL, MySQL
+Tools: Docker, Firebase, GitHub Actions`,
+                              })
+                            }
+                            className="flex flex-col items-center p-2 cursor-pointer hover:text-white transition-all"
+                          >
+                            <div className="text-5xl mb-2">💻</div>
+                            <span className="text-xs text-gray-200">
+                              Skills.cmd
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -369,12 +543,109 @@ export default function Home() {
                   alt={`Screenshot ${i + 1}`}
                   className="w-full h-28 object-cover rounded-md border border-gray-700 hover:scale-105 transition-transform cursor-pointer"
                   whileHover={{ scale: 1.05 }}
-                  onClick={() => setLightboxIndex(i)} // opens the photo viewer
+                  onClick={() => setLightboxIndex(i)}
                 />
               ))}
             </div>
           </motion.div>
         </Rnd>
+      )}
+
+      {/* NOTEPAD / TERMINAL WINDOW */}
+      {openTextFile && (
+        <Rnd
+          default={{
+            x: openTextFile?.x ?? 240,
+            y: openTextFile?.y ?? 160,
+            width: 500,
+            height: 300,
+          }}
+          bounds="window"
+          minWidth={300}
+          minHeight={200}
+        >
+          <motion.div
+            className={`rounded-xl border shadow-2xl overflow-hidden ${
+              openTextFile.name.endsWith(".cmd")
+                ? "bg-black text-green-400 border-gray-700"
+                : "bg-[#fafafa] text-black border-gray-400"
+            }`}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.15 }}
+          >
+            {/* Header */}
+            <div
+              className={`flex justify-between items-center px-3 py-1 border-b text-sm ${
+                openTextFile.name.endsWith(".cmd")
+                  ? "bg-[#111] border-gray-700 text-green-400"
+                  : "bg-[#e1e1e1] border-gray-400 text-gray-800"
+              }`}
+            >
+              <span className="font-medium">
+                {openTextFile.name} —{" "}
+                {openTextFile.name.endsWith(".cmd")
+                  ? "Command Prompt"
+                  : "Notepad"}
+              </span>
+              <button
+                onClick={() => setOpenTextFile(null)}
+                className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600"
+              />
+            </div>
+
+            {/* Content */}
+            <div
+              className={`p-3 h-full overflow-auto font-mono text-sm whitespace-pre-wrap ${
+                openTextFile.name.endsWith(".cmd")
+                  ? "bg-black text-green-400"
+                  : ""
+              }`}
+            >
+              {openTextFile.name.endsWith(".txt")
+                ? formatTextWithBold(openTextFile.preview || "")
+                : openTextFile.preview || "This file is empty."}
+            </div>
+          </motion.div>
+        </Rnd>
+      )}
+
+      {/* PDF VIEWER FULLSCREEN */}
+      {galleryProject?.name === "CV.pdf" && (
+        <motion.div
+          className="fixed inset-0 bg-black/95 flex flex-col z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center bg-[#222] px-4 py-2 border-b border-gray-700 text-gray-200">
+            <span className="font-medium">Viewing CV.pdf</span>
+            <div className="flex items-center gap-3">
+              <a
+                href="/MiguelCarvalhoCV.pdf"
+                download
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded"
+              >
+                Download
+              </a>
+              <button
+                onClick={() => closeGallery()}
+                className="w-4 h-4 text-gray-400 hover:text-white transition"
+              >
+                ✖
+              </button>
+            </div>
+          </div>
+
+          {/* PDF Content */}
+          <iframe
+            src="/MiguelCarvalhoCV.pdf"
+            className="flex-1 w-full"
+            title="CV"
+          ></iframe>
+        </motion.div>
       )}
 
       {/* LIGHTBOX / PHOTO VIEWER */}
@@ -385,7 +656,7 @@ export default function Home() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          onClick={() => setLightboxIndex(null)} // click outside to close
+          onClick={() => setLightboxIndex(null)}
         >
           <div className="relative max-w-5xl w-full flex items-center justify-center">
             <motion.img
