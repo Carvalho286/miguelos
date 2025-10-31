@@ -12,7 +12,8 @@ The interface simulates a desktop environment, complete with draggable windows, 
 - 💬 **About Me section** — includes a CV viewer and terminal-style skills display  
 - 💾 **This PC window** — a creative representation of system drives and files  
 - 🧩 **Admin dashboard** — password-protected CRUD system to manage projects  
-- 📸 **Gallery & Lightbox** — preview project screenshots inside the desktop interface  
+- 📸 **Gallery & Lightbox** — preview project screenshots inside the desktop interface
+- 📱 **Mobile-friendly design** — adaptive layout with stacked windows, larger controls, and smooth touch interactions  
 
 ---
 
@@ -26,7 +27,7 @@ The interface simulates a desktop environment, complete with draggable windows, 
 | **Draggable Windows** | [react-rnd](https://github.com/bokuweb/react-rnd) |
 | **Icons** | [Lucide React](https://lucide.dev/) |
 | **Authentication** | Custom `.env`-based credentials |
-| **Data Storage** | JSON file (`/data/projects.json`) |
+| **Database** | [MongoDB](https://www.mongodb.com/) (via [Mongoose](https://mongoosejs.com/)) |
 
 ---
 
