@@ -33,12 +33,14 @@ The interface simulates a desktop environment, complete with draggable windows, 
 
 ## 🧑‍💼 Admin Panel
 
-A private `/admin` page allows you to:
-- Add, edit, or delete projects  
-- Upload project photos (stored under `/public/projects/<project_name>`)  
-- Automatically update `projects.json`
+Accessible at `/admin`, the private dashboard allows:
+- Adding, editing, or deleting projects  
+- Uploading multiple photos per project  
+- Instant updates synced to MongoDB  
+- Secure login via environment credentials  
 
-Login credentials are securely checked against your `.env.local` values.
+All media and metadata are dynamically reflected across the portfolio interface.
+
 
 ---
 
