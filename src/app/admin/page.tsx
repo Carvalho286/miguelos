@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Trash2, Pencil, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import projectsData from "@/data/projects.json";
 
 interface Project {
   name: string;
@@ -16,7 +15,7 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [projects, setProjects] = useState<Project[]>(projectsData);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [newProject, setNewProject] = useState<Project>({
     name: "",
@@ -27,6 +26,22 @@ export default function AdminPage() {
   const [photoFiles, setPhotoFiles] = useState<FileList | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
+  // Fetch all projects from MongoDB
+  useEffect(() => {
+    async function loadProjects() {
+      try {
+        const res = await fetch("/api/projects", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to fetch projects");
+        const data = await res.json();
+        setProjects(data);
+      } catch (err) {
+        console.error("Error loading projects:", err);
+      }
+    }
+    loadProjects();
+  }, []);
+
+  // Simple login (replace later with real auth)
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch("/api/auth", {
@@ -40,72 +55,72 @@ export default function AdminPage() {
   };
 
   const handleSave = async () => {
-    let uploadedPhotos: string[] = [];
+    try {
+      let uploadedPhotos: string[] = [];
 
-    // Upload novas fotos, se existirem
-    if (photoFiles && photoFiles.length > 0) {
-      const formData = new FormData();
-      for (const file of Array.from(photoFiles)) {
-        formData.append("photos", file);
+      // Upload new photos (via Vercel Blob)
+      if (photoFiles && photoFiles.length > 0) {
+        const formData = new FormData();
+        for (const file of Array.from(photoFiles)) {
+          formData.append("photos", file);
+        }
+        formData.append("projectName", newProject.name);
+
+        const uploadRes = await fetch("/api/projects/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (uploadRes.ok) {
+          uploadedPhotos = await uploadRes.json();
+        } else {
+          alert("Error uploading photos");
+          return;
+        }
       }
-      formData.append("projectName", newProject.name);
 
-      const uploadRes = await fetch("/api/projects/upload", {
-        method: "POST",
-        body: formData,
+      // Merge existing + new photos
+      const finalPhotos = [...(newProject.photos || []), ...uploadedPhotos];
+      const projectToSave = { ...newProject, photos: finalPhotos };
+
+      const method = editingProject ? "PUT" : "POST";
+
+      const res = await fetch("/api/projects", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(projectToSave),
       });
 
-      if (uploadRes.ok) {
-        uploadedPhotos = await uploadRes.json();
-      } else {
-        alert("Error uploading photos");
-        return;
-      }
-    }
+      if (!res.ok) throw new Error("Error saving project");
 
-    // Se estiver a editar, junta as fotos antigas não removidas + novas
-    const finalPhotos = [
-      ...(newProject.photos || []),
-      ...uploadedPhotos,
-    ];
-
-    const projectToSave = {
-      ...newProject,
-      photos: finalPhotos,
-    };
-
-    const method = editingProject ? "PUT" : "POST";
-
-    const res = await fetch("/api/projects", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(projectToSave),
-    });
-
-    if (res.ok) {
       const updated = await res.json();
       setProjects(updated);
       setShowModal(false);
       setNewProject({ name: "", github: "", live: "", photos: [] });
       setEditingProject(null);
       setPhotoFiles(null);
-    } else {
-      alert("Error saving project");
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while saving the project.");
     }
   };
 
   const handleDelete = async (name: string) => {
     if (!confirm(`Delete project "${name}"?`)) return;
 
-    const res = await fetch(`/api/projects?name=${encodeURIComponent(name)}`, {
-      method: "DELETE",
-    });
-
-    if (res.ok) {
+    try {
+      const res = await fetch(
+        `/api/projects?name=${encodeURIComponent(name)}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!res.ok) throw new Error("Error deleting project");
       const updated = await res.json();
       setProjects(updated);
-    } else {
-      alert("Error deleting project");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete project.");
     }
   };
 
@@ -115,7 +130,7 @@ export default function AdminPage() {
     setShowModal(true);
   };
 
-  // Remover fotos específicas
+  // Remove specific photos
   const handleRemovePhoto = (photoUrl: string) => {
     setNewProject((prev) => ({
       ...prev,
@@ -193,13 +208,21 @@ export default function AdminPage() {
                 >
                   <td className="py-3 px-4 font-medium">{p.name}</td>
                   <td className="py-3 px-4 text-blue-400 truncate">
-                    <a href={p.github} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={p.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       {p.github || "-"}
                     </a>
                   </td>
                   <td className="py-3 px-4 text-green-400 truncate">
                     {p.live ? (
-                      <a href={p.live} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={p.live}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         {p.live}
                       </a>
                     ) : (
@@ -208,7 +231,9 @@ export default function AdminPage() {
                   </td>
                   <td className="py-3 px-4">
                     {p.photos && p.photos.length
-                      ? `${p.photos.length} photo${p.photos.length > 1 ? "s" : ""}`
+                      ? `${p.photos.length} photo${
+                          p.photos.length > 1 ? "s" : ""
+                        }`
                       : "-"}
                   </td>
                   <td className="py-3 px-4 text-right flex justify-end gap-2">
@@ -284,28 +309,32 @@ export default function AdminPage() {
                 />
 
                 {/* Preview das fotos existentes */}
-                {editingProject && newProject.photos && newProject.photos.length > 0 && (
-                  <div>
-                    <p className="text-sm text-gray-400 mb-2">Existing Photos:</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {newProject.photos.map((photo, idx) => (
-                        <div key={idx} className="relative group">
-                          <img
-                            src={photo}
-                            alt={`photo-${idx}`}
-                            className="rounded-lg w-full h-24 object-cover border border-gray-700"
-                          />
-                          <button
-                            onClick={() => handleRemovePhoto(photo)}
-                            className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
+                {editingProject &&
+                  newProject.photos &&
+                  newProject.photos.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-400 mb-2">
+                        Existing Photos:
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {newProject.photos.map((photo, idx) => (
+                          <div key={idx} className="relative group">
+                            <img
+                              src={photo}
+                              alt={`photo-${idx}`}
+                              className="rounded-lg w-full h-24 object-cover border border-gray-700"
+                            />
+                            <button
+                              onClick={() => handleRemovePhoto(photo)}
+                              className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 <input
                   type="file"
